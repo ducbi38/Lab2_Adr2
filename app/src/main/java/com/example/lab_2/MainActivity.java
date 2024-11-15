@@ -5,11 +5,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.lab_2.Adapter.MonhocAdapter;
@@ -18,17 +20,18 @@ import com.example.lab_2.Model.Monhoc;
 
 import java.util.ArrayList;
 
-
-
 public class MainActivity extends AppCompatActivity {
 
-    private EditText edtTitle,edtContent,edtDate,edtType;
+    private EditText edtTitle, edtContent, edtDate, edtType;
     private Button btnAdd;
     private RecyclerView rcListmonhoc;
 
     private MonhocDAO monhocDAO;
     private ArrayList<Monhoc> arraymonhoc;
     private MonhocAdapter adapter;
+
+    private String[] difficultyLevels = {"Khó", "Bình thường", "Dễ"};
+    private String selectedDifficulty = "Bình thường";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,16 +41,23 @@ public class MainActivity extends AppCompatActivity {
         edtTitle = findViewById(R.id.edttitle);
         edtContent = findViewById(R.id.edtcontent);
         edtDate = findViewById(R.id.edtdate);
-        edtType = findViewById(R.id.edttype);
         btnAdd = findViewById(R.id.btnadd);
         rcListmonhoc = findViewById(R.id.rclistmonhoc);
+        TextView tvDifficulty = findViewById(R.id.tvDifficulty);
 
         monhocDAO = new MonhocDAO(MainActivity.this);
         arraymonhoc = monhocDAO.getMonhoc();
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         rcListmonhoc.setLayoutManager(linearLayoutManager);
-        adapter = new MonhocAdapter(MainActivity.this,arraymonhoc);
+        adapter = new MonhocAdapter(MainActivity.this, arraymonhoc);
         rcListmonhoc.setAdapter(adapter);
+
+        tvDifficulty.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDifficultyDialog(tvDifficulty);
+            }
+        });
 
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,38 +67,53 @@ public class MainActivity extends AppCompatActivity {
                     String content = edtContent.getText().toString();
                     String date = edtDate.getText().toString();
                     String type = edtType.getText().toString();
-                    Monhoc monhoc = new Monhoc(title,content,date,type,0);
+                    Monhoc monhoc = new Monhoc(title, content, date, type, 0);
                     boolean isSuccess = monhocDAO.addMonhoc(monhoc);
-                    if (isSuccess){
+                    if (isSuccess) {
                         Toast.makeText(MainActivity.this, "Thêm thành công!", Toast.LENGTH_SHORT).show();
                         loadData();
-                    }else {
+                    } else {
                         Toast.makeText(MainActivity.this, "Thất bại, vui lòng nhập lại!", Toast.LENGTH_SHORT).show();
                     }
-                }catch (Exception e){
-
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         });
     }
 
-    private void loadData(){
-        arraymonhoc.removeAll(arraymonhoc);
-        for (Monhoc monhoc : monhocDAO.getMonhoc()){
-            arraymonhoc.add(monhoc);
-        }
+    private void showDifficultyDialog(TextView tvDifficulty) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Chọn mức độ khó của công việc");
+
+        builder.setItems(difficultyLevels, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                selectedDifficulty = difficultyLevels[which];
+                tvDifficulty.setText(selectedDifficulty);
+            }
+        });
+
+        builder.show();
     }
-    public void delete(int index){
+
+    private void loadData() {
+        arraymonhoc.clear();
+        arraymonhoc.addAll(monhocDAO.getMonhoc());
+        adapter.notifyDataSetChanged();
+    }
+
+    public void delete(int index) {
         monhocDAO.deleteMonhoc(arraymonhoc.get(index));
         arraymonhoc.remove(index);
         adapter.notifyDataSetChanged();
         Toast.makeText(this, "Xóa Thành Công", Toast.LENGTH_SHORT).show();
     }
 
-    public void update(int index){
+    public void update(int index) {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
-        View view = inflater.inflate(R.layout.dialog_update_monhoc,null);
+        View view = inflater.inflate(R.layout.dialog_update_monhoc, null);
         alert.setTitle("Sửa");
         alert.setView(view);
 
@@ -131,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                     monhocDAO.updateMonhoc(arraymonhoc.get(index));
                     adapter.notifyDataSetChanged();
                     alertDialog.dismiss();
-                }catch (Exception e){
+                } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "Nhập thất bại, mời nhập lại", Toast.LENGTH_SHORT).show();
                 }
             }

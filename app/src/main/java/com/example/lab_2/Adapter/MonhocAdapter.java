@@ -1,6 +1,8 @@
 package com.example.lab_2.Adapter;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,7 +54,26 @@ public class MonhocAdapter extends RecyclerView.Adapter<MonhocAdapter.MonHocView
         holder.imgDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ((MainActivity)context).delete(position);
+                // Tạo một AlertDialog để xác nhận trước khi xóa
+                new AlertDialog.Builder(context)
+                        .setTitle("Cảnh báo")
+                        .setMessage("Bạn có chắc chắn muốn xóa công việc này không?")
+                        .setPositiveButton("Có", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Nếu người dùng chọn "Có", thực hiện xóa công việc
+                                ((MainActivity) context).delete(position);
+                                Toast.makeText(context, "Đã xóa công việc", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("Không", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Đóng dialog nếu người dùng chọn "Không"
+                                dialog.dismiss();
+                            }
+                        })
+                        .show();
             }
         });
 
